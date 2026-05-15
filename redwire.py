@@ -9,6 +9,7 @@ import json
 import os
 import base64
 from groq import Groq
+from PIL import Image
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -32,7 +33,7 @@ def _logo_data_uri(path: str) -> str | None:
         with open(path, "rb") as image_file:
             encoded = base64.b64encode(image_file.read()).decode("utf-8")
         return f"data:image/jpeg;base64,{encoded}"
-    except Exception:
+    except (OSError, ValueError):
         return None
 
 
@@ -601,12 +602,16 @@ QUICK_QUESTIONS = [
 def main():
     logo_uri = _logo_data_uri(LOGO_PATH)
     logo_available = bool(logo_uri)
+    try:
+        logo_icon = Image.open(LOGO_PATH) if logo_available else None
+    except (OSError, ValueError):
+        logo_icon = None
     header_logo_html = _logo_html(logo_uri, "rw-logo")
     sidebar_logo_html = _logo_html(logo_uri, "rw-logo rw-logo-sidebar")
 
     st.set_page_config(
         page_title="RedWire AI — Man Utd Chatbot",
-        page_icon=LOGO_PATH if logo_available else "🔴",
+        page_icon=logo_icon if logo_icon else "🔴",
         layout="wide",
         initial_sidebar_state="expanded",
     )
