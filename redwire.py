@@ -35,6 +35,12 @@ def _logo_data_uri(path: str) -> str | None:
     except Exception:
         return None
 
+
+def _logo_html(logo_uri: str | None, css_classes: str) -> str:
+    if logo_uri:
+        return f'<img src="{logo_uri}" alt="RedWire logo" class="{css_classes}" />'
+    return '<span class="rw-logo-fallback">🔴</span>'
+
 RAPIDAPI_KEY = _secret("RAPIDAPI_KEY")
 GROQ_API_KEY = _secret("GROQ_API_KEY")
 GROQ_MODEL   = _secret("GROQ_MODEL", "openai/gpt-oss-120b")
@@ -594,17 +600,9 @@ QUICK_QUESTIONS = [
 
 def main():
     logo_uri = _logo_data_uri(LOGO_PATH)
-    logo_available = bool(logo_uri) and os.path.isfile(LOGO_PATH)
-    header_logo_html = (
-        f'<img src="{logo_uri}" alt="RedWire logo" class="rw-logo" />'
-        if logo_uri
-        else '<span class="rw-logo-fallback">🔴</span>'
-    )
-    sidebar_logo_html = (
-        f'<img src="{logo_uri}" alt="RedWire logo" class="rw-logo rw-logo-sidebar" />'
-        if logo_uri
-        else '<span class="rw-logo-fallback">🔴</span>'
-    )
+    logo_available = bool(logo_uri)
+    header_logo_html = _logo_html(logo_uri, "rw-logo")
+    sidebar_logo_html = _logo_html(logo_uri, "rw-logo rw-logo-sidebar")
 
     st.set_page_config(
         page_title="RedWire AI — Man Utd Chatbot",
