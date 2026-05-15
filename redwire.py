@@ -44,6 +44,8 @@ RW_THEME = {
     "shadow": "rgba(2, 6, 23, 0.5)",
 }
 
+LOGO_PATH = "images.jpeg"
+
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 FOOTBALL_HOST = "free-api-live-football-data.p.rapidapi.com"
@@ -585,7 +587,7 @@ QUICK_QUESTIONS = [
 def main():
     st.set_page_config(
         page_title="RedWire AI — Man Utd Chatbot",
-        page_icon="🔴",
+        page_icon=LOGO_PATH if os.path.exists(LOGO_PATH) else "🔴",
         layout="wide",
         initial_sidebar_state="expanded",
     )
@@ -595,12 +597,14 @@ def main():
     st.markdown(
         """
     <div class="rw-header">
-        <p class="rw-title">🔴 RedWire AI</p>
+        <p class="rw-title">RedWire AI</p>
         <p class="rw-subtitle">Manchester United Intelligence Hub · Live Data · AI-Powered</p>
     </div>
     """,
         unsafe_allow_html=True,
     )
+    if os.path.exists(LOGO_PATH):
+        st.image(LOGO_PATH, width=70)
     st.markdown("---")
 
     # ── Session state ─────────────────────────
@@ -611,7 +615,9 @@ def main():
 
     # ── Sidebar ───────────────────────────────
     with st.sidebar:
-        st.markdown("### 🔴 RedWire AI")
+        if os.path.exists(LOGO_PATH):
+            st.image(LOGO_PATH, width=64)
+        st.markdown("### RedWire AI")
         st.caption("Your Manchester United intelligence hub")
         st.divider()
 
@@ -645,7 +651,10 @@ def main():
 
     # ── Chat history ──────────────────────────
     for msg in st.session_state.messages:
-        avatar = "🔴" if msg["role"] == "assistant" else "👤"
+        if msg["role"] == "assistant" and os.path.exists(LOGO_PATH):
+            avatar = LOGO_PATH
+        else:
+            avatar = "🔴" if msg["role"] == "assistant" else "👤"
         with st.chat_message(msg["role"], avatar=avatar):
             st.markdown(msg["content"])
 
@@ -663,7 +672,8 @@ def main():
         with st.chat_message("user", avatar="👤"):
             st.markdown(prompt)
 
-        with st.chat_message("assistant", avatar="🔴"):
+        assistant_avatar = LOGO_PATH if os.path.exists(LOGO_PATH) else "🔴"
+        with st.chat_message("assistant", avatar=assistant_avatar):
             with st.status("🤖 RedWire is thinking...", expanded=True) as status:
 
                 # Step 1 — Intent
