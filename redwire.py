@@ -607,7 +607,7 @@ def main():
 
     st.set_page_config(
         page_title="RedWire AI — Man Utd Chatbot",
-        page_icon=LOGO_PATH if os.path.exists(LOGO_PATH) else "🔴",
+        page_icon=LOGO_PATH if logo_uri else "🔴",
         layout="wide",
         initial_sidebar_state="expanded",
     )
