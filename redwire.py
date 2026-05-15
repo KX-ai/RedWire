@@ -14,11 +14,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ─────────────────────────────────────────────
-# CONFIG
+# CONFIG — st.secrets (Streamlit Cloud) with .env fallback
 # ─────────────────────────────────────────────
-RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL   = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+def _secret(key: str, default: str = None) -> str:
+    """Read from st.secrets first, then os.getenv."""
+    try:
+        return st.secrets[key]
+    except Exception:
+        return os.getenv(key, default)
+
+RAPIDAPI_KEY = _secret("RAPIDAPI_KEY")
+GROQ_API_KEY = _secret("GROQ_API_KEY")
+GROQ_MODEL   = _secret("GROQ_MODEL", "openai/gpt-oss-120b")
 
 groq_client = Groq(api_key=GROQ_API_KEY)
 
