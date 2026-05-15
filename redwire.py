@@ -390,91 +390,139 @@ def apply_styles():
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-    html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+    :root {
+        --rw-bg: #0b0f14;
+        --rw-panel: #111827;
+        --rw-panel-2: #0f172a;
+        --rw-border: #223046;
+        --rw-text: #e6e8ee;
+        --rw-muted: #a3adc2;
+        --rw-accent: #ef4444;
+        --rw-accent-2: #f59e0b;
+        --rw-success: #22c55e;
+        --rw-warning: #fbbf24;
+    }
+
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+        color: var(--rw-text);
+    }
 
     .stApp {
-        background: radial-gradient(ellipse at top, #1a0000 0%, #0a0a0a 60%);
+        background: radial-gradient(1200px 700px at 20% -10%, rgba(239,68,68,0.18), transparent 60%),
+                    radial-gradient(1200px 700px at 120% 10%, rgba(245,158,11,0.15), transparent 55%),
+                    var(--rw-bg);
         min-height: 100vh;
+    }
+
+    /* Main container width */
+    section.main > div {
+        max-width: 1100px;
+        margin: 0 auto;
     }
 
     /* Header */
     .rw-header {
         text-align: center;
-        padding: 2rem 0 0.5rem;
+        padding: 1.8rem 0 0.6rem;
     }
     .rw-title {
-        font-size: 2.8rem;
+        font-size: 2.5rem;
         font-weight: 800;
-        background: linear-gradient(135deg, #DA291C 30%, #FBE122 70%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        letter-spacing: -1px;
+        color: #fff;
+        text-shadow: 0 6px 24px rgba(239,68,68,0.25);
         margin: 0;
     }
     .rw-subtitle {
-        color: #666;
-        font-size: 0.9rem;
-        margin-top: 0.3rem;
-        letter-spacing: 0.5px;
+        color: var(--rw-muted);
+        font-size: 0.95rem;
+        margin-top: 0.35rem;
+        letter-spacing: 0.3px;
     }
 
-    /* Quick-action buttons */
-    div[data-testid="stButton"] > button {
-        background: linear-gradient(135deg, #1c0000, #2a0000);
-        border: 1px solid #DA291C44;
-        color: #ccc;
-        border-radius: 8px;
-        font-size: 0.78rem;
-        transition: all 0.2s;
-    }
-    div[data-testid="stButton"] > button:hover {
-        border-color: #DA291C;
-        color: #fff;
-        background: linear-gradient(135deg, #2a0000, #3a0000);
-        transform: translateX(2px);
+    /* Status + cards */
+    [data-testid="stStatus"] {
+        background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(2,6,23,0.9)) !important;
+        border: 1px solid var(--rw-border) !important;
+        border-radius: 12px !important;
+        color: var(--rw-text) !important;
     }
 
     /* Chat messages */
     [data-testid="stChatMessage"] {
-        border-radius: 12px;
-        padding: 0.2rem;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid var(--rw-border);
+        border-radius: 14px;
+        padding: 0.6rem 0.8rem;
+        margin-bottom: 0.6rem;
+        box-shadow: 0 6px 18px rgba(2, 6, 23, 0.35);
     }
 
     /* Chat input */
     [data-testid="stChatInput"] textarea {
-        background: #111 !important;
-        border: 1px solid #DA291C55 !important;
+        background: #0b1220 !important;
+        border: 1px solid var(--rw-border) !important;
         border-radius: 12px !important;
-        color: #fff !important;
+        color: var(--rw-text) !important;
         font-family: 'Inter', sans-serif !important;
+        padding: 0.8rem 1rem !important;
     }
     [data-testid="stChatInput"] textarea:focus {
-        border-color: #DA291C !important;
-        box-shadow: 0 0 0 2px #DA291C22 !important;
+        border-color: var(--rw-accent) !important;
+        box-shadow: 0 0 0 3px rgba(239,68,68,0.2) !important;
+    }
+
+    /* Buttons */
+    div[data-testid="stButton"] > button {
+        background: linear-gradient(135deg, #0f172a, #111827);
+        border: 1px solid var(--rw-border);
+        color: var(--rw-text);
+        border-radius: 10px;
+        font-size: 0.82rem;
+        padding: 0.55rem 0.8rem;
+        transition: all 0.2s ease;
+    }
+    div[data-testid="stButton"] > button:hover {
+        border-color: var(--rw-accent);
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(239,68,68,0.25);
     }
 
     /* Sidebar */
     [data-testid="stSidebar"] {
-        background: #0d0d0d;
-        border-right: 1px solid #1f1f1f;
+        background: linear-gradient(180deg, #0b1220, #0b0f14);
+        border-right: 1px solid var(--rw-border);
+    }
+    [data-testid="stSidebar"] h3,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] div {
+        color: var(--rw-text) !important;
     }
 
-    /* Status widget */
-    [data-testid="stStatus"] {
-        background: #111 !important;
-        border: 1px solid #DA291C33 !important;
-        border-radius: 10px !important;
+    /* Status colors */
+    .stSuccess {
+        background: rgba(34,197,94,0.15) !important;
+        border: 1px solid rgba(34,197,94,0.35) !important;
+        color: #dcfce7 !important;
+    }
+    .stWarning {
+        background: rgba(251,191,36,0.16) !important;
+        border: 1px solid rgba(251,191,36,0.4) !important;
+        color: #fef3c7 !important;
     }
 
     /* Divider */
-    hr { border-color: #1f1f1f !important; }
+    hr { border-color: var(--rw-border) !important; }
 
     /* Scrollbar */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #0a0a0a; }
-    ::-webkit-scrollbar-thumb { background: #DA291C44; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #DA291C; }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0b0f14; }
+    ::-webkit-scrollbar-thumb { background: #2b3647; border-radius: 6px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3b475b; }
     </style>
     """, unsafe_allow_html=True)
 
