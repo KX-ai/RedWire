@@ -7,11 +7,14 @@ import streamlit as st
 import requests
 import json
 import os
+import base64
 from groq import Groq
+from PIL import Image
 from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
+LOGO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "images.jpeg")
 
 # ─────────────────────────────────────────────
 # CONFIG — st.secrets (Streamlit Cloud) with .env fallback
@@ -22,6 +25,22 @@ def _secret(key: str, default: str = None) -> str:
         return st.secrets[key]
     except Exception:
         return os.getenv(key, default)
+
+
+def _logo_data_uri(path: str) -> str | None:
+    """Encode local logo for reliable HTML rendering in Streamlit."""
+    try:
+        with open(path, "rb") as image_file:
+            encoded = base64.b64encode(image_file.read()).decode("utf-8")
+        return f"data:image/jpeg;base64,{encoded}"
+    except (OSError, ValueError):
+        return None
+
+
+def _logo_html(logo_uri: str | None, css_classes: str) -> str:
+    if logo_uri:
+        return f'<img src="{logo_uri}" alt="RedWire logo" class="{css_classes}" />'
+    return '<span class="rw-logo-fallback">🔴</span>'
 
 RAPIDAPI_KEY = _secret("RAPIDAPI_KEY")
 GROQ_API_KEY = _secret("GROQ_API_KEY")
@@ -426,6 +445,29 @@ def apply_styles():
         text-align: center;
         padding: 1.8rem 0 0.6rem;
     }
+    .rw-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.7rem;
+    }
+    .rw-logo {
+        width: 52px;
+        height: 52px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 1px solid var(--rw-border);
+        box-shadow: 0 6px 16px rgba(2, 6, 23, 0.45);
+    }
+    .rw-logo-sidebar {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+    }
+    .rw-logo-fallback {
+        font-size: 1.8rem;
+        line-height: 1;
+    }
     .rw-title {
         font-size: 2.5rem;
         font-weight: 800;
@@ -502,6 +544,24 @@ def apply_styles():
     [data-testid="stSidebar"] div {
         color: var(--rw-text) !important;
     }
+    .rw-sidebar-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        margin-bottom: 0.25rem;
+    }
+    .rw-sidebar-title {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--rw-text);
+    }
+    .rw-sidebar-subtitle {
+        margin: 0.1rem 0 0;
+        color: var(--rw-muted);
+        font-size: 0.82rem;
+        line-height: 1.25;
+    }
 
     /* Status colors */
     .stSuccess {
@@ -540,18 +600,30 @@ QUICK_QUESTIONS = [
 
 
 def main():
+    logo_uri = _logo_data_uri(LOGO_PATH)
+    logo_available = bool(logo_uri)
+    try:
+        logo_icon = Image.open(LOGO_PATH) if logo_available else None
+    except (OSError, ValueError):
+        logo_icon = None
+    header_logo_html = _logo_html(logo_uri, "rw-logo")
+    sidebar_logo_html = _logo_html(logo_uri, "rw-logo rw-logo-sidebar")
+
     st.set_page_config(
         page_title="RedWire AI — Man Utd Chatbot",
-        page_icon="🔴",
+        page_icon=logo_icon if logo_icon else "🔴",
         layout="wide",
         initial_sidebar_state="expanded",
     )
     apply_styles()
 
     # ── Header ────────────────────────────────
-    st.markdown("""
+    st.markdown(f"""
     <div class="rw-header">
-        <p class="rw-title">🔴 RedWire AI</p>
+        <div class="rw-title-row">
+            {header_logo_html}
+            <p class="rw-title">RedWire AI</p>
+        </div>
         <p class="rw-subtitle">Manchester United Intelligence Hub · Live Data · AI-Powered</p>
     </div>
     """, unsafe_allow_html=True)
@@ -565,8 +637,15 @@ def main():
 
     # ── Sidebar ───────────────────────────────
     with st.sidebar:
-        st.markdown("### 🔴 RedWire AI")
-        st.caption("Your Manchester United intelligence hub")
+        st.markdown(f"""
+        <div class="rw-sidebar-brand">
+            {sidebar_logo_html}
+            <div>
+                <p class="rw-sidebar-title">RedWire AI</p>
+                <p class="rw-sidebar-subtitle">Your Manchester United intelligence hub</p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         st.divider()
 
         # Man Utd ID status
