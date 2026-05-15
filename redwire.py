@@ -185,6 +185,8 @@ def get_man_utd_id() -> str | None:
         or (data if isinstance(data, list) else [])
     )
     for t in teams:
+        if not isinstance(t, dict):
+            continue
         name = (t.get("name") or t.get("teamName") or "").lower()
         if "manchester united" in name or "man utd" in name:
             tid = t.get("id") or t.get("teamId") or t.get("team_id")
