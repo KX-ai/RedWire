@@ -25,7 +25,24 @@ def _secret(key: str, default: str = None) -> str:
 
 RAPIDAPI_KEY = _secret("RAPIDAPI_KEY")
 GROQ_API_KEY = _secret("GROQ_API_KEY")
-GROQ_MODEL   = _secret("GROQ_MODEL", "openai/gpt-oss-120b")
+GROQ_MODEL = _secret("GROQ_MODEL", "openai/gpt-oss-120b")
+
+# UI theme tokens (high-contrast, accessibility-first)
+RW_THEME = {
+    "bg": "#0b0f14",
+    "panel": "#111827",
+    "panel_2": "#0f172a",
+    "border": "#253247",
+    "text": "#f8fafc",
+    "muted": "#cbd5f5",
+    "accent": "#ef4444",
+    "accent_2": "#f59e0b",
+    "success": "#22c55e",
+    "warning": "#fbbf24",
+    "input_bg": "#0b1220",
+    "input_text": "#f8fafc",
+    "shadow": "rgba(2, 6, 23, 0.5)",
+}
 
 groq_client = Groq(api_key=GROQ_API_KEY)
 
@@ -33,8 +50,8 @@ FOOTBALL_HOST = "free-api-live-football-data.p.rapidapi.com"
 FOOTBALL_BASE = f"https://{FOOTBALL_HOST}"
 
 RAPIDAPI_HEADERS = {
-    "x-rapidapi-key":  RAPIDAPI_KEY,
-    "Content-Type":    "application/json",
+    "x-rapidapi-key": RAPIDAPI_KEY,
+    "Content-Type": "application/json",
 }
 
 # ─────────────────────────────────────────────
@@ -65,12 +82,12 @@ def search_x(query: str, n: int = 8) -> list[dict]:
         tweets = [
             {
                 "username": t.get("screen_name"),
-                "text":     t.get("text"),
-                "likes":    t.get("favorites", 0),
+                "text": t.get("text"),
+                "likes": t.get("favorites", 0),
                 "retweets": t.get("retweets", 0),
-                "replies":  t.get("replies", 0),
+                "replies": t.get("replies", 0),
                 "created_at": t.get("created_at"),
-                "source":   "X",
+                "source": "X",
             }
             for t in data.get("timeline", [])
             if t.get("type") == "tweet"
@@ -90,12 +107,12 @@ def search_x(query: str, n: int = 8) -> list[dict]:
         return [
             {
                 "username": t.get("author", {}).get("username"),
-                "text":     t.get("text"),
-                "likes":    t.get("likeCount", 0),
+                "text": t.get("text"),
+                "likes": t.get("likeCount", 0),
                 "retweets": t.get("retweetCount", 0),
-                "replies":  t.get("replyCount", 0),
+                "replies": t.get("replyCount", 0),
                 "created_at": t.get("createdAt"),
-                "source":   "X",
+                "source": "X",
             }
             for t in data.get("data", [])
             if not t.get("isPromoted", False)
@@ -116,18 +133,20 @@ def _parse_threads(items: list, source_tag: str) -> list[dict]:
         text = item.get("text") or item.get("caption") or item.get("content") or ""
         if not text:
             continue
-        out.append({
-            "username": (
-                item.get("username")
-                or item.get("user", {}).get("username")
-                or "unknown"
-            ),
-            "text":     text,
-            "likes":    item.get("like_count") or item.get("likes") or 0,
-            "replies":  item.get("reply_count") or item.get("replies") or 0,
-            "created_at": item.get("created_at") or item.get("timestamp") or "",
-            "source":   "Threads",
-        })
+        out.append(
+            {
+                "username": (
+                    item.get("username")
+                    or item.get("user", {}).get("username")
+                    or "unknown"
+                ),
+                "text": text,
+                "likes": item.get("like_count") or item.get("likes") or 0,
+                "replies": item.get("reply_count") or item.get("replies") or 0,
+                "created_at": item.get("created_at") or item.get("timestamp") or "",
+                "source": "Threads",
+            }
+        )
     return out
 
 
@@ -156,11 +175,7 @@ def search_threads(query: str, n: int = 6) -> list[dict]:
         {"query": query},
     )
     if data and "_error" not in data:
-        items = (
-            data.get("data")
-            or data.get("posts")
-            or (data if isinstance(data, list) else [])
-        )
+        items = data.get("data") or data.get("posts") or (data if isinstance(data, list) else [])
         return _parse_threads(items, "Threads")[:n]
     return []
 
@@ -244,13 +259,14 @@ Rules:
 - social_keywords: 2-4 search terms for X/Threads related to the query
 """
 
+
 def extract_intent(user_query: str) -> dict:
     try:
         resp = groq_client.chat.completions.create(
             model=GROQ_MODEL,
             messages=[
                 {"role": "system", "content": INTENT_SYSTEM},
-                {"role": "user",   "content": user_query},
+                {"role": "user", "content": user_query},
             ],
             temperature=0.1,
             max_tokens=250,
@@ -276,10 +292,10 @@ def extract_intent(user_query: str) -> dict:
 # DATA FETCHING
 # ─────────────────────────────────────────────
 def fetch_data(intent_data: dict, team_id: str | None) -> dict:
-    intent   = intent_data.get("intent", "general")
+    intent = intent_data.get("intent", "general")
     keywords = intent_data.get("social_keywords", ["Manchester United"])
     social_q = " ".join(keywords)
-    result   = {}
+    result = {}
 
     # ── Football API ──────────────────────────
     if intent_data.get("needs_football_api"):
@@ -301,7 +317,7 @@ def fetch_data(intent_data: dict, team_id: str | None) -> dict:
 
     # ── Social APIs ───────────────────────────
     if intent_data.get("needs_social_api"):
-        result["x_posts"]      = search_x(social_q)
+        result["x_posts"] = search_x(social_q)
         result["threads_posts"] = search_threads(social_q)
 
     return result
@@ -317,7 +333,9 @@ def build_context(data: dict) -> str:
         parts.append("=== LIVE SCORES ===\n" + json.dumps(data["live_scores"], indent=2)[:2500])
 
     if "standings" in data and "_error" not in (data["standings"] or {}):
-        parts.append("=== PREMIER LEAGUE STANDINGS ===\n" + json.dumps(data["standings"], indent=2)[:2500])
+        parts.append(
+            "=== PREMIER LEAGUE STANDINGS ===\n" + json.dumps(data["standings"], indent=2)[:2500]
+        )
 
     if "fixtures" in data and "_error" not in (data["fixtures"] or {}):
         parts.append("=== UPCOMING FIXTURES ===\n" + json.dumps(data["fixtures"], indent=2)[:2000])
@@ -337,8 +355,7 @@ def build_context(data: dict) -> str:
 
     if data.get("threads_posts"):
         lines = [
-            f"@{p['username']}: {p['text']}  [❤ {p['likes']}]"
-            for p in data["threads_posts"]
+            f"@{p['username']}: {p['text']}  [❤ {p['likes']}]" for p in data["threads_posts"]
         ]
         parts.append("=== FAN REACTIONS (Threads) ===\n" + "\n".join(lines))
 
@@ -365,6 +382,7 @@ Today: {today}
 {context}
 """
 
+
 def stream_response(user_query: str, context: str):
     system = ANSWER_SYSTEM.format(
         today=datetime.now().strftime("%A, %d %B %Y %H:%M"),
@@ -374,7 +392,7 @@ def stream_response(user_query: str, context: str):
         model=GROQ_MODEL,
         messages=[
             {"role": "system", "content": system},
-            {"role": "user",   "content": user_query},
+            {"role": "user", "content": user_query},
         ],
         temperature=0.7,
         max_tokens=900,
@@ -386,145 +404,170 @@ def stream_response(user_query: str, context: str):
 # STREAMLIT UI
 # ─────────────────────────────────────────────
 def apply_styles():
-    st.markdown("""
+    st.markdown(
+        f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-    :root {
-        --rw-bg: #0b0f14;
-        --rw-panel: #111827;
-        --rw-panel-2: #0f172a;
-        --rw-border: #223046;
-        --rw-text: #e6e8ee;
-        --rw-muted: #a3adc2;
-        --rw-accent: #ef4444;
-        --rw-accent-2: #f59e0b;
-        --rw-success: #22c55e;
-        --rw-warning: #fbbf24;
-    }
+    :root {{
+        --rw-bg: {RW_THEME['bg']};
+        --rw-panel: {RW_THEME['panel']};
+        --rw-panel-2: {RW_THEME['panel_2']};
+        --rw-border: {RW_THEME['border']};
+        --rw-text: {RW_THEME['text']};
+        --rw-muted: {RW_THEME['muted']};
+        --rw-accent: {RW_THEME['accent']};
+        --rw-accent-2: {RW_THEME['accent_2']};
+        --rw-success: {RW_THEME['success']};
+        --rw-warning: {RW_THEME['warning']};
+        --rw-input-bg: {RW_THEME['input_bg']};
+        --rw-input-text: {RW_THEME['input_text']};
+        --rw-shadow: {RW_THEME['shadow']};
+    }}
 
-    html, body, [class*="css"] {
+    html, body, [class*="css"] {{
         font-family: 'Inter', sans-serif;
         color: var(--rw-text);
-    }
+    }}
 
-    .stApp {
-        background: radial-gradient(1200px 700px at 20% -10%, rgba(239,68,68,0.18), transparent 60%),
-                    radial-gradient(1200px 700px at 120% 10%, rgba(245,158,11,0.15), transparent 55%),
-                    var(--rw-bg);
+    .stApp {{
+        background:
+            radial-gradient(900px 520px at 12% -10%, rgba(239,68,68,0.35), transparent 60%),
+            radial-gradient(900px 520px at 95% 8%, rgba(245,158,11,0.22), transparent 55%),
+            var(--rw-bg);
         min-height: 100vh;
-    }
+    }}
 
     /* Main container width */
-    section.main > div {
+    section.main > div {{
         max-width: 1100px;
         margin: 0 auto;
-    }
+    }}
 
     /* Header */
-    .rw-header {
+    .rw-header {{
         text-align: center;
-        padding: 1.8rem 0 0.6rem;
-    }
-    .rw-title {
-        font-size: 2.5rem;
+        padding: 2.1rem 0 0.8rem;
+    }}
+    .rw-title {{
+        font-size: 2.6rem;
         font-weight: 800;
         color: #fff;
-        text-shadow: 0 6px 24px rgba(239,68,68,0.25);
+        text-shadow: 0 10px 26px rgba(239,68,68,0.35);
         margin: 0;
-    }
-    .rw-subtitle {
+        letter-spacing: 0.4px;
+    }}
+    .rw-subtitle {{
         color: var(--rw-muted);
-        font-size: 0.95rem;
-        margin-top: 0.35rem;
-        letter-spacing: 0.3px;
-    }
+        font-size: 1rem;
+        margin-top: 0.45rem;
+        letter-spacing: 0.4px;
+    }}
 
     /* Status + cards */
-    [data-testid="stStatus"] {
-        background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(2,6,23,0.9)) !important;
+    [data-testid="stStatus"] {{
+        background: linear-gradient(180deg, rgba(15,23,42,0.95), rgba(2,6,23,0.95)) !important;
         border: 1px solid var(--rw-border) !important;
-        border-radius: 12px !important;
+        border-radius: 14px !important;
         color: var(--rw-text) !important;
-    }
+        box-shadow: 0 10px 22px var(--rw-shadow);
+    }}
 
     /* Chat messages */
-    [data-testid="stChatMessage"] {
-        background: rgba(15, 23, 42, 0.6);
-        border: 1px solid var(--rw-border);
-        border-radius: 14px;
-        padding: 0.6rem 0.8rem;
-        margin-bottom: 0.6rem;
-        box-shadow: 0 6px 18px rgba(2, 6, 23, 0.35);
-    }
+    [data-testid="stChatMessage"] {{
+        background: rgba(15, 23, 42, 0.86);
+        border: 1px solid rgba(37, 50, 71, 0.9);
+        border-radius: 16px;
+        padding: 0.7rem 0.9rem;
+        margin-bottom: 0.7rem;
+        box-shadow: 0 10px 20px var(--rw-shadow);
+    }}
+
+    [data-testid="stChatMessage"] p {{
+        color: var(--rw-text);
+        font-size: 1rem;
+        line-height: 1.55;
+    }}
 
     /* Chat input */
-    [data-testid="stChatInput"] textarea {
-        background: #0b1220 !important;
+    [data-testid="stChatInput"] textarea {{
+        background: var(--rw-input-bg) !important;
         border: 1px solid var(--rw-border) !important;
-        border-radius: 12px !important;
-        color: var(--rw-text) !important;
+        border-radius: 14px !important;
+        color: var(--rw-input-text) !important;
         font-family: 'Inter', sans-serif !important;
-        padding: 0.8rem 1rem !important;
-    }
-    [data-testid="stChatInput"] textarea:focus {
+        padding: 0.85rem 1rem !important;
+        min-height: 52px !important;
+        caret-color: var(--rw-accent) !important;
+    }}
+    [data-testid="stChatInput"] textarea::placeholder {{
+        color: rgba(248, 250, 252, 0.7) !important;
+    }}
+    [data-testid="stChatInput"] textarea:focus {{
         border-color: var(--rw-accent) !important;
-        box-shadow: 0 0 0 3px rgba(239,68,68,0.2) !important;
-    }
+        box-shadow: 0 0 0 3px rgba(239,68,68,0.28) !important;
+    }}
 
     /* Buttons */
-    div[data-testid="stButton"] > button {
+    div[data-testid="stButton"] > button {{
         background: linear-gradient(135deg, #0f172a, #111827);
         border: 1px solid var(--rw-border);
         color: var(--rw-text);
-        border-radius: 10px;
-        font-size: 0.82rem;
-        padding: 0.55rem 0.8rem;
+        border-radius: 12px;
+        font-size: 0.86rem;
+        padding: 0.6rem 0.9rem;
         transition: all 0.2s ease;
-    }
-    div[data-testid="stButton"] > button:hover {
+    }}
+    div[data-testid="stButton"] > button:hover {{
         border-color: var(--rw-accent);
         color: #fff;
         transform: translateY(-1px);
-        box-shadow: 0 6px 14px rgba(239,68,68,0.25);
-    }
+        box-shadow: 0 8px 16px rgba(239,68,68,0.28);
+    }}
 
     /* Sidebar */
-    [data-testid="stSidebar"] {
+    [data-testid="stSidebar"] {{
         background: linear-gradient(180deg, #0b1220, #0b0f14);
         border-right: 1px solid var(--rw-border);
-    }
+    }}
     [data-testid="stSidebar"] h3,
     [data-testid="stSidebar"] h2,
     [data-testid="stSidebar"] h1,
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] span,
-    [data-testid="stSidebar"] div {
+    [data-testid="stSidebar"] div {{
         color: var(--rw-text) !important;
-    }
+    }}
+
+    /* Sidebar sections */
+    [data-testid="stSidebar"] .stMarkdown {{
+        color: var(--rw-text) !important;
+    }}
 
     /* Status colors */
-    .stSuccess {
-        background: rgba(34,197,94,0.15) !important;
-        border: 1px solid rgba(34,197,94,0.35) !important;
+    .stSuccess {{
+        background: rgba(34,197,94,0.18) !important;
+        border: 1px solid rgba(34,197,94,0.4) !important;
         color: #dcfce7 !important;
-    }
-    .stWarning {
-        background: rgba(251,191,36,0.16) !important;
-        border: 1px solid rgba(251,191,36,0.4) !important;
-        color: #fef3c7 !important;
-    }
+    }}
+    .stWarning {{
+        background: rgba(251,191,36,0.2) !important;
+        border: 1px solid rgba(251,191,36,0.45) !important;
+        color: #fff3c4 !important;
+    }}
 
     /* Divider */
-    hr { border-color: var(--rw-border) !important; }
+    hr {{ border-color: var(--rw-border) !important; }}
 
     /* Scrollbar */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #0b0f14; }
-    ::-webkit-scrollbar-thumb { background: #2b3647; border-radius: 6px; }
-    ::-webkit-scrollbar-thumb:hover { background: #3b475b; }
+    ::-webkit-scrollbar {{ width: 10px; }}
+    ::-webkit-scrollbar-track {{ background: #0b0f14; }}
+    ::-webkit-scrollbar-thumb {{ background: #334155; border-radius: 8px; }}
+    ::-webkit-scrollbar-thumb:hover {{ background: #475569; }}
     </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 QUICK_QUESTIONS = [
@@ -549,12 +592,15 @@ def main():
     apply_styles()
 
     # ── Header ────────────────────────────────
-    st.markdown("""
+    st.markdown(
+        """
     <div class="rw-header">
         <p class="rw-title">🔴 RedWire AI</p>
         <p class="rw-subtitle">Manchester United Intelligence Hub · Live Data · AI-Powered</p>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
     st.markdown("---")
 
     # ── Session state ─────────────────────────
@@ -635,9 +681,9 @@ def main():
                     sources.append(f"X ({len(fetched['x_posts'])} posts)")
                 if fetched.get("threads_posts"):
                     sources.append(f"Threads ({len(fetched['threads_posts'])} posts)")
-                for k in ("live_scores","standings","fixtures","results","squad"):
+                for k in ("live_scores", "standings", "fixtures", "results", "squad"):
                     if k in fetched:
-                        sources.append(k.replace("_"," ").title())
+                        sources.append(k.replace("_", " ").title())
                 st.write(f"✅ Sources used: {', '.join(sources) if sources else 'None'}")
 
                 # Step 3 — Context (RAG)
