@@ -594,6 +594,7 @@ QUICK_QUESTIONS = [
 
 def main():
     logo_uri = _logo_data_uri(LOGO_PATH)
+    logo_available = bool(logo_uri) and os.path.isfile(LOGO_PATH)
     header_logo_html = (
         f'<img src="{logo_uri}" alt="RedWire logo" class="rw-logo" />'
         if logo_uri
@@ -607,7 +608,7 @@ def main():
 
     st.set_page_config(
         page_title="RedWire AI — Man Utd Chatbot",
-        page_icon=LOGO_PATH if logo_uri else "🔴",
+        page_icon=LOGO_PATH if logo_available else "🔴",
         layout="wide",
         initial_sidebar_state="expanded",
     )
